@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Evaluator Dokumen Rencana Reklamasi – DESDM Aceh</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#0B2545;--navy2:#1F4E79;--navy3:#2D6A9F;
+  --teal:#0D9488;--teal-lt:#CCFBF1;
+  --amber:#D97706;--amber-lt:#FEF3C7;
+  --red:#DC2626;--red-lt:#FEE2E2;
+  --green:#059669;--green-lt:#D1FAE5;
+  --blue-lt:#DBEAFE;--blue-dk:#1E40AF;
+  --gray0:#F8FAFC;--gray1:#F1F5F9;--gray2:#E2E8F0;--gray3:#CBD5E1;
+  --gray4:#94A3B8;--gray5:#64748B;--gray6:#475569;--gray7:#1E293B;
+  --white:#FFFFFF;
+  --font:'IBM Plex Sans',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--gray0);color:var(--gray7);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.sidebar{background:var(--navy);color:#fff;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.main{padding:2rem;overflow-x:hidden}
+
+/* ── Sidebar ── */
+.sidebar-head{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,.1)}
+.sidebar-logo{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+.logo-circle{width:40px;height:40px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;text-align:center;line-height:1.2;flex-shrink:0}
+.sidebar-title{font-size:13px;font-weight:600;line-height:1.3}
+.sidebar-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px}
+.sidebar-nav{padding:1rem 0;flex:1}
+.nav-section{padding:.25rem 1.25rem;font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;margin-top:.75rem}
+.nav-item{display:flex;align-items:center;gap:.5rem;padding:.5rem 1.25rem;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;border-left:2px solid transparent;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.1);color:#fff;border-left-color:var(--teal)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.3);flex-shrink:0}
+.nav-dot.ok{background:var(--green)}
+.nav-dot.warn{background:var(--amber)}
+.nav-dot.err{background:var(--red)}
+.sidebar-footer{padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,.1);font-size:10px;color:rgba(255,255,255,.35);line-height:1.5}
+
+/* ── Page title bar ── */
+.page-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.page-bar h1{font-size:20px;font-weight:600;color:var(--navy)}
+.page-bar p{font-size:12px;color:var(--gray5);margin-top:1px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;background:var(--teal-lt);color:var(--teal)}
+
+/* ── Cards ── */
+.card{background:var(--white);border:1px solid var(--gray2);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.card-title{font-size:11px;font-weight:600;color:var(--gray5);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.card-title::before{content:'';display:block;width:3px;height:14px;background:var(--teal);border-radius:2px}
+
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.form-grid.two{grid-template-columns:1fr 1fr}
+.form-grid.one{grid-template-columns:1fr}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--gray6);margin-bottom:4px;letter-spacing:.02em}
+.field input,.field select{width:100%;height:36px;padding:0 10px;border:1px solid var(--gray3);border-radius:var(--radius);font-family:var(--font);font-size:13px;color:var(--gray7);background:var(--white);outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--navy3)}
+
+/* ── PDF Upload Zone ── */
+.upload-zone{border:2px dashed var(--gray3);border-radius:var(--radius-lg);padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--gray0);position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--teal);background:var(--teal-lt)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:32px;margin-bottom:.75rem;line-height:1}
+.upload-label{font-size:14px;font-weight:500;color:var(--navy2);margin-bottom:.25rem}
+.upload-hint{font-size:12px;color:var(--gray5)}
+.file-pill{display:inline-flex;align-items:center;gap:.5rem;background:var(--navy);color:#fff;padding:.5rem 1rem;border-radius:20px;font-size:12px;margin-top:.75rem}
+.file-pill button{background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px;padding:0;line-height:1}
+.file-pill button:hover{color:#fff}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:9px 20px;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--navy2);color:#fff}
+.btn-primary:hover{background:var(--navy)}
+.btn-primary:disabled{background:var(--gray3);color:var(--gray5);cursor:not-allowed}
+.btn-outline{background:transparent;color:var(--gray7);border:1px solid var(--gray3)}
+.btn-outline:hover{background:var(--gray1);border-color:var(--gray4)}
+.btn-success{background:var(--green);color:#fff}
+.btn-success:hover{background:#047857}
+.btn-row{display:flex;gap:.75rem;align-items:center}
+
+/* ── Progress / Loading ── */
+.loading-card{text-align:center;padding:3rem 2rem}
+.spin{width:36px;height:36px;border:3px solid var(--gray2);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-track{height:6px;background:var(--gray2);border-radius:3px;overflow:hidden;margin:.75rem auto;max-width:320px}
+.progress-fill{height:100%;background:var(--teal);border-radius:3px;transition:width .4s ease}
+.prog-label{font-size:12px;color:var(--gray5)}
+
+/* ── Result summary metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.metric{border-radius:var(--radius-lg);padding:1rem 1.25rem;border:1px solid}
+.metric .m-val{font-size:28px;font-weight:600;font-family:var(--mono);margin-bottom:2px}
+.metric .m-lbl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.met-ok{background:var(--green-lt);border-color:#A7F3D0;color:var(--green)}
+.met-fix{background:var(--amber-lt);border-color:#FDE68A;color:var(--amber)}
+.met-add{background:var(--blue-lt);border-color:#BFDBFE;color:var(--blue-dk)}
+.met-crit{background:var(--red-lt);border-color:#FECACA;color:var(--red)}
+
+/* ── Result table ── */
+.result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem}
+.result-meta{font-size:12px;color:var(--gray5)}
+.result-meta strong{color:var(--gray7);font-weight:600}
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--gray2)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--navy);color:#fff;padding:10px 12px;font-weight:500;font-size:11px;text-align:left;letter-spacing:.03em}
+tbody tr{border-bottom:1px solid var(--gray2)}
+tbody tr:last-child{border-bottom:none}
+tbody tr.section-row td{background:var(--gray1);color:var(--gray6);font-weight:600;font-size:10px;padding:6px 12px;letter-spacing:.05em;text-transform:uppercase}
+tbody td{padding:10px 12px;vertical-align:top;line-height:1.5;color:var(--gray7)}
+tbody tr:hover:not(.section-row){background:var(--gray0)}
+colgroup col:nth-child(1){width:4%}
+colgroup col:nth-child(2){width:16%}
+colgroup col:nth-child(3){width:38%}
+colgroup col:nth-child(4){width:32%}
+colgroup col:nth-child(5){width:10%}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.03em;white-space:nowrap}
+.b-ok{background:var(--green-lt);color:var(--green)}
+.b-fix{background:var(--amber-lt);color:var(--amber)}
+.b-add{background:var(--blue-lt);color:var(--blue-dk)}
+.b-crit{background:var(--red-lt);color:var(--red)}
+
+/* ── Filter pills ── */
+.filter-bar{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.filt{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--gray3);background:var(--white);color:var(--gray6);transition:all .15s}
+.filt:hover{border-color:var(--gray4);background:var(--gray1)}
+.filt.active{background:var(--navy2);color:#fff;border-color:var(--navy2)}
+
+/* ── Error ── */
+.err-box{background:var(--red-lt);border:1px solid #FECACA;border-radius:var(--radius-lg);padding:1rem 1.25rem;font-size:13px;color:var(--red)}
+
+/* ── Tooltip-like info ── */
+.info-note{background:var(--blue-lt);border-left:3px solid var(--blue-dk);border-radius:0 var(--radius) var(--radius) 0;padding:.75rem 1rem;font-size:12px;color:var(--blue-dk);margin-bottom:1rem}
+
+/* ── Kepmen badge ── */
+.kepmen-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;background:var(--navy);color:#fff;font-size:10px;font-weight:500;font-family:var(--mono)}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;height:auto}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-head">
+    <div class="sidebar-logo">
+      <div class="logo-circle">DESDM<br>ACEH</div>
+      <div>
+        <div class="sidebar-title">Evaluator RR</div>
+        <div class="sidebar-sub">Dinas ESDM Aceh</div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:.25rem">Kepmen ESDM 344.K/MB.01/MEM.B/2025</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu</div>
+    <div class="nav-item active" onclick="showTab('input')">
+      <div class="nav-dot"></div> Input Dokumen
+    </div>
+    <div class="nav-item" onclick="showTab('result')" id="nav-result" style="opacity:.4;pointer-events:none">
+      <div class="nav-dot" id="nd-result"></div> Hasil Evaluasi
+    </div>
+
+    <div class="nav-section" style="margin-top:1.5rem">Parameter Evaluasi</div>
+    <div class="nav-item"><div class="nav-dot"></div>Cover & Kata Pengantar</div>
+    <div class="nav-item"><div class="nav-dot"></div>BAB I – Pendahuluan</div>
+    <div class="nav-item"><div class="nav-dot"></div>BAB II – Bukaan & Reklamasi</div>
+    <div class="nav-item"><div class="nav-dot"></div>BAB III – RBL & Void</div>
+    <div class="nav-item"><div class="nav-dot"></div>BAB IV – Kriteria Keberhasilan</div>
+    <div class="nav-item"><div class="nav-dot"></div>Teknis Revegetasi</div>
+    <div class="nav-item"><div class="nav-dot"></div>Jaminan Reklamasi</div>
+    <div class="nav-item"><div class="nav-dot"></div>Peta & Lampiran</div>
+    <div class="nav-item"><div class="nav-dot"></div>Konsistensi Data</div>
+  </nav>
+
+  <div class="sidebar-footer">
+    21 aspek evaluasi<br>
+    Berbasis Kepmen ESDM 344.K · 2025<br>
+    Powered by Claude AI
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+<!-- ─── INPUT VIEW ─── -->
+<div id="tab-input">
+  <div class="page-bar">
+    <div>
+      <h1>Evaluasi Dokumen Rencana Reklamasi</h1>
+      <p>Upload PDF dokumen RR, isi identitas, lalu klik Mulai Evaluasi</p>
+    </div>
+    <span class="kepmen-tag">344.K / 2025</span>
+  </div>
+
+  <!-- Identitas -->
+  <div class="card">
+    <div class="card-title">Identitas Dokumen</div>
+    <div class="form-grid">
+      <div class="field"><label>Nama Perusahaan *</label><input type="text" id="f-perusahaan" placeholder="PT ..."/></div>
+      <div class="field"><label>Nomor IUP-OP</label><input type="text" id="f-iup" placeholder="545/DPMPTSP/.../..."/></div>
+      <div class="field"><label>Komoditas</label><input type="text" id="f-komoditas" placeholder="Batubara"/></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Periode Dokumen RR</label><input type="text" id="f-periode" placeholder="2022–2026"/></div>
+      <div class="field"><label>Nomor Periode</label>
+        <select id="f-noperiode">
+          <option value="">Pilih periode ke-</option>
+          <option>Periode 1</option><option>Periode 2</option><option>Periode 3</option><option>Periode 4</option><option>Periode 5</option>
+        </select>
+      </div>
+      <div class="field"><label>Luas IUP (Ha)</label><input type="number" id="f-luasiup" placeholder="2024"/></div>
+    </div>
+    <div class="form-grid two">
+      <div class="field"><label>Lokasi Administrasi</label><input type="text" id="f-lokasi" placeholder="Kec. ..., Kab. ..., Prov. ..."/></div>
+      <div class="field"><label>Tanggal Dokumen</label><input type="text" id="f-tgl" placeholder="20 Februari 2026"/></div>
+    </div>
+  </div>
+
+  <!-- Upload PDF -->
+  <div class="card">
+    <div class="card-title">Upload Dokumen RR (PDF)</div>
+    <div class="info-note">Upload file PDF dokumen Rencana Reklamasi. AI akan membaca langsung isi PDF tanpa perlu copy-paste teks. Ukuran file maksimal ~30 MB.</div>
+
+    <div class="upload-zone" id="drop-zone">
+      <input type="file" id="pdf-input" accept=".pdf" onchange="handleFile(event)"/>
+      <div class="upload-icon">📄</div>
+      <div class="upload-label">Klik atau drag & drop PDF di sini</div>
+      <div class="upload-hint">Format: PDF · Maks. ~30 MB</div>
+      <div id="file-info"></div>
+    </div>
+
+    <div style="margin-top:1rem">
+      <div class="field"><label>Catatan Tambahan Evaluator (opsional)</label>
+        <textarea id="f-catatan" rows="2" style="width:100%;padding:8px 10px;border:1px solid var(--gray3);border-radius:var(--radius);font-family:var(--font);font-size:13px;resize:vertical;outline:none" placeholder="Catatan khusus atau temuan lapangan yang perlu diperhatikan AI..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-eval" onclick="startEval()">
+      <span>&#9654;</span> Mulai Evaluasi
+    </button>
+    <span id="status-hint" style="font-size:12px;color:var(--gray5)"></span>
+  </div>
+</div>
+
+<!-- ─── LOADING VIEW ─── -->
+<div id="tab-loading" style="display:none">
+  <div class="card loading-card">
+    <div class="spin"></div>
+    <div style="font-size:15px;font-weight:500;margin-bottom:.5rem">AI sedang membaca dan mengevaluasi dokumen...</div>
+    <div class="progress-track"><div class="progress-fill" id="prog-bar" style="width:5%"></div></div>
+    <div class="prog-label" id="prog-lbl">Membaca isi PDF...</div>
+  </div>
+</div>
+
+<!-- ─── RESULT VIEW ─── -->
+<div id="tab-result" style="display:none">
+
+  <div class="result-header">
+    <div>
+      <h1 style="font-size:18px;font-weight:600;color:var(--navy)" id="r-title">Hasil Evaluasi</h1>
+      <div class="result-meta" id="r-meta"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="resetAll()">&#8592; Evaluasi Baru</button>
+      <button class="btn btn-success" onclick="exportExcel()">&#8595; Export Excel</button>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric met-ok"><div class="m-val" id="m-ok">0</div><div class="m-lbl">Memadai</div></div>
+    <div class="metric met-fix"><div class="m-val" id="m-fix">0</div><div class="m-lbl">Diperbaiki</div></div>
+    <div class="metric met-add"><div class="m-val" id="m-add">0</div><div class="m-lbl">Dilengkapi</div></div>
+    <div class="metric met-crit"><div class="m-val" id="m-crit">0</div><div class="m-lbl">Kritis</div></div>
+  </div>
+
+  <div class="card" style="padding:1rem 1.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+      <div class="filter-bar" id="filter-bar">
+        <button class="filt active" onclick="filterTable('ALL')">Semua</button>
+        <button class="filt" onclick="filterTable('MEMADAI')">Memadai</button>
+        <button class="filt" onclick="filterTable('DIPERBAIKI')">Diperbaiki</button>
+        <button class="filt" onclick="filterTable('DILENGKAPI')">Dilengkapi</button>
+        <button class="filt" onclick="filterTable('KRITIS')">Kritis</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="eval-table">
+        <colgroup><col/><col/><col/><col/><col/></colgroup>
+        <thead><tr><th>No</th><th>Aspek</th><th>Temuan</th><th>Rekomendasi</th><th>Status</th></tr></thead>
+        <tbody id="eval-body"></tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--gray5);margin-top:.75rem;text-align:right" id="row-count"></div>
+  </div>
+
+</div>
+
+<!-- ─── ERROR VIEW ─── -->
+<div id="tab-error" style="display:none">
+  <div class="card">
+    <div class="err-box" id="err-msg">Terjadi kesalahan.</div>
+    <div class="btn-row" style="margin-top:1rem">
+      <button class="btn btn-outline" onclick="resetAll()">Coba Lagi</button>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+let pdfBase64 = '';
+let evalResults = [];
+let docMeta = {};
+let currentFilter = 'ALL';
+
+/* ── Drag & drop ── */
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') loadPDF(f);
+});
+
+function handleFile(e) {
+  const f = e.target.files[0];
+  if (f) loadPDF(f);
+}
+
+function loadPDF(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataUrl = ev.target.result;
+    pdfBase64 = dataUrl.split(',')[1];
+    document.getElementById('file-info').innerHTML =
+      `<div class="file-pill">📄 ${file.name} (${(file.size/1024/1024).toFixed(1)} MB) <button onclick="clearPDF(event)">✕</button></div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPDF(e) {
+  e.stopPropagation();
+  pdfBase64 = '';
+  document.getElementById('file-info').innerHTML = '';
+  document.getElementById('pdf-input').value = '';
+}
+
+/* ── Navigation ── */
+function showTab(t) {
+  ['input','loading','result','error'].forEach(n => {
+    document.getElementById('tab-'+n).style.display = n === t ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if (t === 'input') document.querySelector('.nav-item').classList.add('active');
+  if (t === 'result') document.getElementById('nav-result').classList.add('active');
+}
+
+/* ── Main evaluation ── */
+async function startEval() {
+  const perusahaan = document.getElementById('f-perusahaan').value.trim();
+  if (!perusahaan) { document.getElementById('status-hint').textContent = '⚠ Nama perusahaan wajib diisi.'; return; }
+  if (!pdfBase64) { document.getElementById('status-hint').textContent = '⚠ Upload file PDF terlebih dahulu.'; return; }
+
+  docMeta = {
+    perusahaan,
+    iup: document.getElementById('f-iup').value,
+    komoditas: document.getElementById('f-komoditas').value || 'Batubara',
+    periode: document.getElementById('f-periode').value,
+    noperiode: document.getElementById('f-noperiode').value,
+    luasiup: document.getElementById('f-luasiup').value,
+    lokasi: document.getElementById('f-lokasi').value,
+    tgl: document.getElementById('f-tgl').value,
+    catatan: document.getElementById('f-catatan').value,
+  };
+
+  showTab('loading');
+  animateProgress();
+
+  try {
+    evalResults = await callClaudeWithPDF();
+    renderResult();
+    showTab('result');
+    document.getElementById('nav-result').style.opacity = '1';
+    document.getElementById('nav-result').style.pointerEvents = 'auto';
+  } catch(err) {
+    document.getElementById('err-msg').textContent = 'Error: ' + err.message;
+    showTab('error');
+  }
+}
+
+/* ── Progress animation ── */
+function animateProgress() {
+  const bar = document.getElementById('prog-bar');
+  const lbl = document.getElementById('prog-lbl');
+  const steps = [
+    [12, 'Membaca isi PDF dokumen RR...'],
+    [25, 'Menganalisis BAB I – Pendahuluan...'],
+    [38, 'Mengevaluasi rencana bukaan lahan...'],
+    [52, 'Memeriksa teknis revegetasi...'],
+    [65, 'Mengecek konsistensi data antar narasi & tabel...'],
+    [78, 'Menilai kelengkapan lampiran & peta...'],
+    [88, 'Menyusun temuan & rekomendasi...'],
+    [94, 'Memfinalisasi hasil evaluasi...'],
+  ];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (!document.getElementById('tab-loading') || document.getElementById('tab-loading').style.display === 'none') { clearInterval(iv); return; }
+    if (i >= steps.length) { clearInterval(iv); return; }
+    bar.style.width = steps[i][0] + '%';
+    lbl.textContent = steps[i][1];
+    i++;
+  }, 1900);
+}
+
+/* ── Claude API call with PDF ── */
+const SYSTEM_PROMPT = `Anda adalah evaluator dokumen Rencana Reklamasi (RR) Tahap Operasi Produksi milik Dinas ESDM Aceh. Evaluasi berdasarkan Kepmen ESDM 344.K/MB.01/MEM.B/2025 tentang Pedoman Teknis Pelaksanaan Reklamasi dan Pascatambang.
+
+Evaluasi SELURUH 21 aspek berikut. Temuan dan rekomendasi HARUS spesifik berdasarkan isi dokumen yang diberikan (angka, nama, lokasi, dll) — bukan generik.
+
+ASPEK:
+1. COVER | Cover | kelengkapan: nomor IUP, komoditas, tahun, nama perusahaan, nomor SK
+2. KATA PENGANTAR | Administrasi | periode ke-berapa, tanda tangan, tanggal
+3. DAFTAR ISI | Administrasi | kesesuaian Format 5 Kepmen 344.K, sub-bab lengkap
+4. SURAT PERNYATAAN | Administrasi | format sesuai Kepmen 344.K, poin-poin lengkap
+5. BAB I: Status IUP | BAB I | identitas perusahaan, nomor IUP, koordinat, masa berlaku, peta
+6. BAB I: Dokumen Lingkungan | BAB I | nomor persetujuan LH, tanggal, dilampirkan atau tidak
+7. BAB I: Dokumen Studi Kelayakan | BAB I | nomor SK, tanggal, dilampirkan atau tidak
+8. BAB I: Tata Guna Lahan Sebelum | BAB I | tabel komposisi lahan (APL/KH), foto kondisi lapangan, acuan FS/LH, peta tata guna lahan
+9. BAB I: Tata Guna Lahan Sesudah | BAB I | peta rencana tata guna lahan pascatambang, tabel peruntukan, acuan FS/LH
+10. BAB II: Rencana Bukaan Lahan | BAB II | konsistensi angka narasi vs Format 6, data kumulatif, per tahun, shapefile
+11. BAB II: Rencana Reklamasi | BAB II | konsistensi angka (narasi vs tabel vs peta), Format 6, per tahun, total reklamasi
+12. BAB II: Teknis Revegetasi | BAB II | cover crop tepat?, tanaman pioner fast-growing (BUKAN karet/sawit), jarak tanam, jumlah bibit konsisten dgn luas reklamasi, dosis pupuk
+13. BAB II: Jaminan Reklamasi | BAB II | standar biaya per ha sesuai Matriks 1 Kepmen 344.K, perhitungan per tahun, total, kesalahan pengetikan angka
+14. BAB III: Pekerjaan Sipil/RBL | BAB III | lokasi, luasan, judul sub-bab sesuai Format 5
+15. BAB III: Kajian Void | BAB III | ada void atau tidak, backfilling, klasifikasi lubang tambang
+16. BAB IV: Kriteria Revegetasi | BAB IV | penatagunaan lahan, revegetasi, pemeliharaan, luas konsisten dengan total reklamasi
+17. BAB IV: Format 17 | BAB IV | tabel terisi spesifik bukan copy template, luas sesuai rencana, standar keberhasilan jelas
+18. LAMPIRAN: Peta Bukaan | Lampiran | per tahun, legenda, label poligon, shapefile
+19. LAMPIRAN: Peta Reklamasi | Lampiran | per tahun, konsistensi dengan BAB II, IPD/OPD dibedakan, shapefile
+20. LAMPIRAN: Dokumen LH & SK | Lampiran | dokumen persetujuan LH dan SK terlampir atau tidak
+21. Data Kumulatif | BAB II | realisasi dan rencana bukaan+reklamasi periode sebelumnya, angka kumulatif FS/AMDAL masuk akal
+
+STATUS:
+- MEMADAI: sudah sesuai, tidak perlu perbaikan substantif
+- DIPERBAIKI: perlu perbaikan/penyempurnaan
+- DILENGKAPI: dokumen/data wajib ditambahkan  
+- KRITIS: inkonsistensi data signifikan atau kesalahan fatal yang wajib dikoreksi sebelum persetujuan
+
+PENTING – CEK KRITIS REVEGETASI:
+Jika karet atau sawit disebutkan sebagai tanaman PIONER/fast-growing untuk reklamasi → status KRITIS karena bukan fast-growing. Tanaman pioner yang benar: sengon (falcataria moluccana), akasia (acacia mangium), jabon (anthocephalus cadamba).
+Cek rumus: jumlah pohon = luas (Ha) × 10.000 / (jarak tanam 1 × jarak tanam 2). Jika angka dalam dokumen tidak sesuai rumus → KRITIS.
+
+Balas HANYA dengan JSON array (tanpa markdown, tanpa penjelasan lain):
+[{"no":"1","aspek":"Cover","bab":"COVER","temuan":"...","rekomendasi":"...","status":"MEMADAI"},...]
+Wajib 21 objek, urutan sesuai di atas.`;
+
+async function callClaudeWithPDF() {
+  const userContent = [
+    {
+      type: 'document',
+      source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 }
+    },
+    {
+      type: 'text',
+      text: `Evaluasi dokumen Rencana Reklamasi ini:\nPerusahaan: ${docMeta.perusahaan}\nIUP: ${docMeta.iup}\nPeriode: ${docMeta.periode} (${docMeta.noperiode})\nLuas IUP: ${docMeta.luasiup} Ha\nLokasi: ${docMeta.lokasi}\nKomoditas: ${docMeta.komoditas}\nCatatan evaluator: ${docMeta.catatan || '-'}`
+    }
+  ];
+
+  const res = await fetch('/api/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error((errData.error && errData.error.message) || 'API error ' + res.status);
+  }
+
+  const data = await res.json();
+  const raw = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+  const clean = raw.replace(/```json|```/g, '').trim();
+  return JSON.parse(clean);
+}
+
+/* ── Render results ── */
+function renderResult() {
+  document.getElementById('r-title').textContent = 'Hasil Evaluasi – ' + docMeta.perusahaan;
+  document.getElementById('r-meta').textContent =
+    `IUP: ${docMeta.iup} | ${docMeta.periode} (${docMeta.noperiode}) | ${docMeta.lokasi} | Luas: ${docMeta.luasiup} Ha`;
+
+  let ok=0, fix=0, add=0, crit=0;
+  evalResults.forEach(r => {
+    if (r.status==='MEMADAI') ok++;
+    else if (r.status==='DIPERBAIKI') fix++;
+    else if (r.status==='DILENGKAPI') add++;
+    else if (r.status==='KRITIS') crit++;
+  });
+  document.getElementById('m-ok').textContent = ok;
+  document.getElementById('m-fix').textContent = fix;
+  document.getElementById('m-add').textContent = add;
+  document.getElementById('m-crit').textContent = crit;
+
+  renderTable('ALL');
+}
+
+function renderTable(filter) {
+  currentFilter = filter;
+  const tbody = document.getElementById('eval-body');
+  const groups = {};
+  evalResults.forEach(r => {
+    if (!groups[r.bab]) groups[r.bab] = [];
+    groups[r.bab].push(r);
+  });
+
+  let html = '';
+  let shown = 0;
+  Object.entries(groups).forEach(([bab, rows]) => {
+    const visible = filter === 'ALL' ? rows : rows.filter(r => r.status === filter);
+    if (!visible.length) return;
+    html += `<tr class="section-row"><td colspan="5">── ${bab} ──</td></tr>`;
+    visible.forEach(r => {
+      html += `<tr data-status="${r.status}">
+        <td style="text-align:center;color:var(--gray5);font-family:var(--mono)">${r.no}</td>
+        <td><strong style="font-weight:500;font-size:12px">${r.aspek}</strong></td>
+        <td>${r.temuan}</td>
+        <td>${r.rekomendasi}</td>
+        <td style="text-align:center"><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
+      </tr>`;
+      shown++;
+    });
+  });
+  tbody.innerHTML = html;
+  document.getElementById('row-count').textContent = `Menampilkan ${shown} dari ${evalResults.length} aspek`;
+}
+
+function filterTable(f) {
+  document.querySelectorAll('.filt').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim().toUpperCase() === f || (f==='ALL' && el.textContent.trim()==='Semua'));
+  });
+  renderTable(f);
+}
+
+function badgeClass(s) {
+  if (s==='MEMADAI') return 'b-ok';
+  if (s==='DIPERBAIKI') return 'b-fix';
+  if (s==='DILENGKAPI') return 'b-add';
+  return 'b-crit';
+}
+
+/* ── Export Excel ── */
+function exportExcel() {
+  if (!evalResults.length) return;
+  const today = new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  const header = [
+    ['HASIL EVALUASI DOKUMEN RENCANA REKLAMASI TAHAP OPERASI PRODUKSI'],
+    ['Dinas Energi dan Sumber Daya Mineral Aceh'],
+    ['Kepmen ESDM 344.K/MB.01/MEM.B/2025'],
+    [],
+    ['Perusahaan', docMeta.perusahaan, '', 'No. IUP-OP', docMeta.iup],
+    ['Periode', docMeta.periode, '', 'No. Periode', docMeta.noperiode],
+    ['Luas IUP', docMeta.luasiup + ' Ha', '', 'Komoditas', docMeta.komoditas],
+    ['Lokasi', docMeta.lokasi],
+    ['Tanggal Evaluasi', today],
+    [],
+    ['No','Aspek','BAB/Bagian','Temuan','Rekomendasi / Tindak Lanjut','Status']
+  ];
+  const rows = evalResults.map(r => [r.no, r.aspek, r.bab, r.temuan, r.rekomendasi, r.status]);
+  const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
+  ws['!cols'] = [{wch:5},{wch:22},{wch:16},{wch:60},{wch:50},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Evaluasi RR');
+  const fn = `Evaluasi_RR_${docMeta.perusahaan.replace(/\s+/g,'_')}_${docMeta.periode||'2026'}.xlsx`;
+  XLSX.writeFile(wb, fn);
+}
+
+/* ── Reset ── */
+function resetAll() {
+  pdfBase64 = '';
+  evalResults = [];
+  document.getElementById('file-info').innerHTML = '';
+  document.getElementById('pdf-input').value = '';
+  document.getElementById('status-hint').textContent = '';
+  showTab('input');
+  document.getElementById('nav-result').style.opacity = '.4';
+  document.getElementById('nav-result').style.pointerEvents = 'none';
+}
+</script>
+</body>
+</html>
